@@ -68,7 +68,8 @@ void main(){
 	vec3 effects = texture(textureEffects,In.uv).rgb;
 
 	// Compute the direction from the point to the light
-	vec3 d = normalize(light.position.xyz - In.position);
+	// light.position.w == 0 if the light is directional, 1 else.
+	vec3 d = normalize(light.position.xyz - light.position.w * In.position);
 
 	vec3 diffuseColor = texture(textureColor, In.uv).rgb;
 	
@@ -101,29 +102,26 @@ void main(){
 
 	vec3 lightShading = diffuse * diffuseColor + specular * light.Is.rgb;
 	
-	// Shadows
-	float shadow = 0.0;
-	float bias = 0.005;
-	
-	// If the depth at the current fragment is too high, we are necessarily out of the light frustum, no shadow. Else:
-	if(In.lightSpacePosition.z < 1.0){
-		// PCF sampling: draw eight samples at random around the current position in the shadow map.
-		for (int i=0;i<8;i++){
-			// Draw a random float in [0,1], based on the position of the fragment in world space, scaled and floored to avoid repetitions, and on the current sample index.
-			float randomValue = random(vec4(floor(In.modelPosition*7500.0), i));
-			// Compute a [0-15] index using this random float.
-			int randomIndex = int(16.0*randomValue)%16;
-			// Compute the shifted position using the poisson disk reference vectors.
-			vec2 shiftedPosition = In.lightSpacePosition.xy + poissonDisk[randomIndex]/500.0;
-			// Query the corresponding depth in the shadow map.
-			float depthLight = texture(shadowMap, shiftedPosition).r;
-			// If the fragment is in the shadow, increment the shadow value.
-			shadow += (In.lightSpacePosition.z - depthLight  > bias) ? 0.125 : 0;
-		}
+	float shadow = 1.0;
+	if (In.lightSpacePosition.z < 1.0){
+		// Read first and second moment from shadow map.
+		vec2 moments = texture(shadowMap, In.lightSpacePosition.xy).rg;
+		// Initial probability of light.
+		float probability = float(In.lightSpacePosition.z <= moments.x);
+		// Compute variance.
+		float variance = moments.y - (moments.x * moments.x);
+		variance = max(variance, 0.0001);
+		// Delta of depth.
+		float delta = In.lightSpacePosition.z - moments.x;
+		// Use Chebyshev to estimate bound on probability.
+		float probabilityMax = variance / (variance + delta*delta);
+		shadow = max(probability, probabilityMax);
+		// Limit light bleeding by rescaling and clamping the probability factor.
+		shadow = clamp( (shadow - 0.1) / (1.0 - 0.1), 0.0, 1.0);
 	}
 	
 	// Mix the ambient color (always present) with the light contribution, weighted by the shadow factor.
-	fragColor = ambient * light.Ia.rgb + (1.0-shadow)*lightShading;
+	fragColor = ambient * light.Ia.rgb + shadow * lightShading;
 	// Mix with the reflexion color.
 	fragColor = mix(fragColor,reflectionColor,0.5*effects.b);
 	

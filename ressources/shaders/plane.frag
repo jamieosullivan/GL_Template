@@ -75,7 +75,8 @@ vec3 shading(vec2 uv, vec3 lightPosition, float lightShininess, vec3 lightColor,
 	n = normalize(In.tbn * n);
 	
 	// Compute the direction from the point to the light
-	vec3 d = normalize(lightPosition - In.position);
+	// light.position.w == 0 if the light is directional, 1 else.
+	vec3 d = normalize(lightPosition - light.position.w * In.position);
 	
 	vec3 diffuseColor = texture(textureColor, uv).rgb;
 	
@@ -105,28 +106,24 @@ vec3 shading(vec2 uv, vec3 lightPosition, float lightShininess, vec3 lightColor,
 // Compute the shadow multiplicator based on shadow map.
 
 float shadow(vec3 lightSpacePosition){
-	// Shadows
-	float shadowMultiplicator = 0.0;
-	float bias = 0.005;
-	
-	// If the depth at the current fragment is too high, we are necessarily out of the light frustum, no shadow. Else:
-	if(lightSpacePosition.z < 1.0){
-		// PCF sampling: draw eight samples at random around the current position in the shadow map.
-		for (int i=0;i<8;i++){
-			// Draw a random float in [0,1], based on the position of the fragment in world space, scaled and floored to avoid repetitions, and on the current sample index.
-			float randomValue = random(vec4(floor(In.modelPosition*7500.0), i));
-			// Compute a [0-15] index using this random float.
-			int randomIndex = int(16.0*randomValue)%16;
-			// Compute the shifted position using the poisson disk reference vectors.
-			vec2 shiftedPosition = lightSpacePosition.xy + poissonDisk[randomIndex]/500.0;
-			// Query the corresponding depth in the shadow map.
-			float depthLight = texture(shadowMap, shiftedPosition).r;
-			// If the fragment is in the shadow, increment the shadow value.
-			shadowMultiplicator += (lightSpacePosition.z - depthLight  > bias) ? 0.125 : 0;
-		}
+	float probabilityMax = 1.0;
+	if (lightSpacePosition.z < 1.0){
+		// Read first and second moment from shadow map.
+		vec2 moments = texture(shadowMap, lightSpacePosition.xy).rg;
+		// Initial probability of light.
+		float probability = float(lightSpacePosition.z <= moments.x);
+		// Compute variance.
+		float variance = moments.y - (moments.x * moments.x);
+		variance = max(variance, 0.00001);
+		// Delta of depth.
+		float d = lightSpacePosition.z - moments.x;
+		// Use Chebyshev to estimate bound on probability.
+		probabilityMax = variance / (variance + d*d);
+		probabilityMax = max(probability, probabilityMax);
+		// Limit light bleeding by rescaling and clamping the probability factor.
+		probabilityMax = clamp( (probabilityMax - 0.1) / (1.0 - 0.1), 0.0, 1.0);
 	}
-	
-	return 1.0 - shadowMultiplicator;
+	return probabilityMax;
 }
 
 
@@ -232,7 +229,8 @@ void main(){
 	vec3 lightShading = shading(parallaxUV, light.position.xyz, light.shininess, light.Is.rgb,ambient);
 	
 	// Compute parallax self-shadowing factor.
-	vec3 lTangentDir = normalize(In.tangentSpaceLight - In.tangentSpacePosition);
+	// The light direction is computed, light.position.w == 0 if the light is directional, 1 else.
+	vec3 lTangentDir = normalize(In.tangentSpaceLight - light.position.w * In.tangentSpacePosition);
 	float shadowParallax = parallaxShadow(parallaxUV, lTangentDir);
 	
 	// Shadow: combine the factor from the parallax self-shadowing with the factor from the shadow map.

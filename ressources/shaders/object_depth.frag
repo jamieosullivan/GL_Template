@@ -2,10 +2,10 @@
 
 
 // Output: the fragment color
-out vec3 fragColor;
+out vec2 fragColor;
 
 void main(){
 	
-	fragColor = vec3(gl_FragCoord.z);
+	fragColor = vec2(gl_FragCoord.z,gl_FragCoord.z*gl_FragCoord.z);
 	
 }
