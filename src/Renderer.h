@@ -6,10 +6,8 @@
 
 #include "Framebuffer.h"
 #include "camera/Camera.h"
-#include "Suzanne.h"
+#include "Object.h"
 #include "Skybox.h"
-#include "Dragon.h"
-#include "Plane.h"
 #include "ScreenQuad.h"
 #include "Light.h"
 
@@ -64,17 +62,12 @@ private:
 
 	Light _light;
 	
-	Suzanne _suzanne;
-	Dragon _dragon;
+	Object _object;
 	Skybox _skybox;
-	Plane _plane;
-	Framebuffer _lightFramebuffer;
-	Framebuffer _blurFramebuffer;
+	
 	Framebuffer _sceneFramebuffer;
-	Framebuffer _fxaaFramebuffer;
-	ScreenQuad _blurScreen;
-	ScreenQuad _fxaaScreen;
 	ScreenQuad _finalScreen;
+	
 	size_t _pingpong;
 	GLuint _padding;
 	

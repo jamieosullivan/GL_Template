@@ -21,15 +21,9 @@ void Renderer::init(int width, int height){
 	_camera.screen(width, height);
 	
 	// Setup the framebuffer.
-	_lightFramebuffer = Framebuffer(512, 512);
-	_lightFramebuffer.setup(GL_RG,GL_FLOAT,GL_LINEAR,GL_CLAMP_TO_BORDER);
-	_blurFramebuffer = Framebuffer(_lightFramebuffer._width, _lightFramebuffer._height);
-	_blurFramebuffer.setup(GL_RG,GL_FLOAT,GL_LINEAR,GL_CLAMP_TO_BORDER);
-	
 	_sceneFramebuffer = Framebuffer(_camera._renderSize[0],_camera._renderSize[1]);
 	_sceneFramebuffer.setup(GL_RGBA,GL_UNSIGNED_BYTE,GL_LINEAR,GL_CLAMP_TO_EDGE);
-	_fxaaFramebuffer = Framebuffer(_camera._renderSize[0],_camera._renderSize[1]);
-	_fxaaFramebuffer.setup(GL_RGBA,GL_UNSIGNED_BYTE,GL_LINEAR,GL_CLAMP_TO_EDGE);
+	
 	
 	// Query the renderer identifier, and the supported OpenGL version.
 	const GLubyte* renderer = glGetString(GL_RENDERER);
@@ -79,13 +73,9 @@ void Renderer::init(int width, int height){
 	glBindBuffer(GL_UNIFORM_BUFFER,0);
 	
 	// Initialize objects.
-	_suzanne.init(_blurFramebuffer.textureId());
-	_dragon.init(_blurFramebuffer.textureId());
-	_plane.init(_blurFramebuffer.textureId());
+	_object.init();
 	_skybox.init();
-	_blurScreen.init(_lightFramebuffer.textureId(), "ressources/shaders/boxblur");
-	_fxaaScreen.init(_sceneFramebuffer.textureId(), "ressources/shaders/fxaa");
-	_finalScreen.init(_fxaaFramebuffer.textureId(), "ressources/shaders/final_screenquad");
+	_finalScreen.init(_sceneFramebuffer.textureId(), "ressources/shaders/screenquad");
 	checkGLError();
 	
 	
@@ -117,40 +107,7 @@ void Renderer::draw(){
 	glUnmapBuffer(GL_UNIFORM_BUFFER);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	
-	
-	// --- Light pass -------
-	
-	// Draw the scene inside the framebuffer.
-	_lightFramebuffer.bind();
-	glViewport(0, 0, _lightFramebuffer._width, _lightFramebuffer._height);
-	
-	// Set the clear color to white.
-	glClearColor(1.0f,1.0f,1.0f,0.0f);
-	// Clear the color and depth buffers.
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	// Draw objects.
-	_suzanne.drawDepth(elapsed, _light._mvp);
-	_dragon.drawDepth(elapsed, _light._mvp);
-	_plane.drawDepth(elapsed, _light._mvp);
-	
-	// Unbind the shadow map framebuffer.
-	_lightFramebuffer.unbind();
-	// ----------------------
-	
-	// --- Blur pass --------
-	glDisable(GL_DEPTH_TEST);
-	// Bind the post-processing framebuffer.
-	_blurFramebuffer.bind();
-	// Set screen viewport.
-	glViewport(0,0,_blurFramebuffer._width, _blurFramebuffer._height);
-	
-	// Draw the fullscreen quad
-	_blurScreen.draw( 1.0f / _camera._renderSize);
-	
-	_blurFramebuffer.unbind();
 	glEnable(GL_DEPTH_TEST);
-	// ----------------------
 	
 	// --- Scene pass -------
 	// Bind the full scene framebuffer.
@@ -162,9 +119,7 @@ void Renderer::draw(){
 	glClear(GL_DEPTH_BUFFER_BIT);
 	
 	// Draw objects
-	_suzanne.draw(elapsed, _camera._view, _camera._projection, _pingpong);
-	_dragon.draw(elapsed, _camera._view, _camera._projection, _pingpong);
-	_plane.draw(elapsed, _camera._view, _camera._projection, _pingpong);
+	_object.draw(elapsed, _camera._view, _camera._projection, _pingpong);
 	_skybox.draw(elapsed, _camera._view, _camera._projection);
 	
 	// Unbind the full scene framebuffer.
@@ -172,18 +127,6 @@ void Renderer::draw(){
 	// ----------------------
 	
 	glDisable(GL_DEPTH_TEST);
-	// --- FXAA pass -------
-	// Bind the post-processing framebuffer.
-	_fxaaFramebuffer.bind();
-	// Set screen viewport.
-	glViewport(0,0,_fxaaFramebuffer._width, _fxaaFramebuffer._height);
-	
-	// Draw the fullscreen quad
-	_fxaaScreen.draw( 1.0f / _camera._renderSize);
-	
-	_fxaaFramebuffer.unbind();
-	// ----------------------
-	
 	
 	// --- Final pass -------
 	// We now render a full screen quad in the default framebuffer, using sRGB space.
@@ -197,7 +140,7 @@ void Renderer::draw(){
 	
 	glDisable(GL_FRAMEBUFFER_SRGB);
 	// ----------------------
-	glEnable(GL_DEPTH_TEST);
+	
 	
 	// Update timer
 	_timer = glfwGetTime();
@@ -213,17 +156,10 @@ void Renderer::physics(float elapsedTime){
 
 void Renderer::clean(){
 	// Clean objects.
-	_suzanne.clean();
-	_dragon.clean();
-	_plane.clean();
+	_object.clean();
 	_skybox.clean();
-	_blurScreen.clean();
-	_fxaaScreen.clean();
 	_finalScreen.clean();
-	_lightFramebuffer.clean();
-	_blurFramebuffer.clean();
 	_sceneFramebuffer.clean();
-	_fxaaFramebuffer.clean();
 }
 
 
@@ -234,7 +170,6 @@ void Renderer::resize(int width, int height){
 	_camera.screen(width, height);
 	// Resize the framebuffer.
 	_sceneFramebuffer.resize(_camera._renderSize);
-	_fxaaFramebuffer.resize(_camera._renderSize);
 }
 
 void Renderer::keyPressed(int key, int action){
