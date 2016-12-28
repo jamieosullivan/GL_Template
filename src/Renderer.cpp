@@ -8,11 +8,11 @@
 #include "helpers/ProgramUtilities.h"
 #include "Renderer.h"
 
-Renderer::Renderer(){}
+
 
 Renderer::~Renderer(){}
 
-void Renderer::init(int width, int height){
+Renderer::Renderer(int width, int height){
 
 	// Initialize the timer and pingpong.
 	_timer = glfwGetTime();

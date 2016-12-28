@@ -25,12 +25,10 @@ class Renderer {
 
 public:
 
-	Renderer();
-
 	~Renderer();
 
 	/// Init function
-	void init(int width, int height);
+	Renderer(int width, int height);
 
 	/// Draw function
 	void draw();

@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <iostream>
-
+#include <memory>
 #include "helpers/ProgramUtilities.h"
 
 #include "Renderer.h"
@@ -11,36 +11,37 @@
 #define INITIAL_SIZE_WIDTH 800
 #define INITIAL_SIZE_HEIGHT 600
 
-/// The shared renderer
-
-Renderer renderer;
 
 /// Callbacks
 
 void resize_callback(GLFWwindow* window, int width, int height){
-	renderer.resize(width, height);
+	Renderer *rendererPtr = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+	rendererPtr->resize(width, height);
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
 	// Handle quitting
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){ 
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
 		glfwSetWindowShouldClose(window, GL_TRUE);
 		return;
-	} 
-	renderer.keyPressed(key, action);	
+	}
+	Renderer *rendererPtr = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+	rendererPtr->keyPressed(key, action);
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
 	double x, y;
-    glfwGetCursorPos(window, &x, &y);
-	renderer.buttonPressed(button, action, x, y);
+	glfwGetCursorPos(window, &x, &y);
+	Renderer *rendererPtr = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+	rendererPtr->buttonPressed(button, action, x, y);
 }
 
 
 void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos){
 	bool left = glfwGetMouseButton(window,GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
 	bool right = glfwGetMouseButton(window,GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
-	renderer.mousePosition(xpos,ypos, left, right);
+	Renderer *rendererPtr = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+	rendererPtr->mousePosition(xpos,ypos, left, right);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset){
@@ -86,8 +87,9 @@ int main () {
 	checkGLError();
 
 	// Create the renderer.
-	renderer.init(INITIAL_SIZE_WIDTH,INITIAL_SIZE_HEIGHT);
-
+	Renderer renderer = Renderer(INITIAL_SIZE_WIDTH,INITIAL_SIZE_HEIGHT);
+	
+	glfwSetWindowUserPointer(window, &renderer);
 	// Setup callbacks for various interactions and inputs.
 	glfwSetFramebufferSizeCallback(window, resize_callback);	// Resizing the window
 	glfwSetKeyCallback(window,key_callback);					// Pressing a key
