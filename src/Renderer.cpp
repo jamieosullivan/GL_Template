@@ -21,8 +21,7 @@ Renderer::Renderer(int width, int height){
 	_camera.screen(width, height);
 	
 	// Setup the framebuffer.
-	_sceneFramebuffer = Framebuffer(_camera._renderSize[0],_camera._renderSize[1]);
-	_sceneFramebuffer.setup(GL_RGBA,GL_UNSIGNED_BYTE,GL_LINEAR,GL_CLAMP_TO_EDGE);
+	_sceneFramebuffer = std::make_shared<Framebuffer>(_camera._renderSize[0],_camera._renderSize[1], GL_RGBA,GL_UNSIGNED_BYTE,GL_LINEAR,GL_CLAMP_TO_EDGE);
 	
 	
 	// Query the renderer identifier, and the supported OpenGL version.
@@ -75,7 +74,7 @@ Renderer::Renderer(int width, int height){
 	// Initialize objects.
 	_object.init();
 	_skybox.init();
-	_finalScreen.init(_sceneFramebuffer.textureId(), "ressources/shaders/screenquad");
+	_finalScreen.init(_sceneFramebuffer->textureId(), "ressources/shaders/screenquad");
 	checkGLError();
 	
 	
@@ -111,9 +110,9 @@ void Renderer::draw(){
 	
 	// --- Scene pass -------
 	// Bind the full scene framebuffer.
-	_sceneFramebuffer.bind();
+	_sceneFramebuffer->bind();
 	// Set screen viewport
-	glViewport(0,0,_sceneFramebuffer._width,_sceneFramebuffer._height);
+	glViewport(0,0,_sceneFramebuffer->_width,_sceneFramebuffer->_height);
 	
 	// Clear the depth buffer (we know we will draw everywhere, no need to clear color.
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -123,7 +122,7 @@ void Renderer::draw(){
 	_skybox.draw(elapsed, _camera._view, _camera._projection);
 	
 	// Unbind the full scene framebuffer.
-	_sceneFramebuffer.unbind();
+	_sceneFramebuffer->unbind();
 	// ----------------------
 	
 	glDisable(GL_DEPTH_TEST);
@@ -159,7 +158,7 @@ void Renderer::clean(){
 	_object.clean();
 	_skybox.clean();
 	_finalScreen.clean();
-	_sceneFramebuffer.clean();
+	_sceneFramebuffer->clean();
 }
 
 
@@ -169,7 +168,7 @@ void Renderer::resize(int width, int height){
 	// Update the projection matrix.
 	_camera.screen(width, height);
 	// Resize the framebuffer.
-	_sceneFramebuffer.resize(_camera._renderSize);
+	_sceneFramebuffer->resize(_camera._renderSize);
 }
 
 void Renderer::keyPressed(int key, int action){

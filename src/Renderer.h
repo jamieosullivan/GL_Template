@@ -63,7 +63,7 @@ private:
 	Object _object;
 	Skybox _skybox;
 	
-	Framebuffer _sceneFramebuffer;
+	std::shared_ptr<Framebuffer> _sceneFramebuffer;
 	ScreenQuad _finalScreen;
 	
 	size_t _pingpong;
