@@ -4,8 +4,8 @@ CXX = g++
 #Include directories (for headers): standard include dirs in /usr and /usr/local, and our helper directory.
 INCLUDEDIR = -I/usr/include/ -I/usr/local/include/ -Isrc/helpers/
 
-#Libraries needed: OpenGL, GLEW and glfw3. glfw3 requires Cocoa, IOKit and CoreVideo.
-LIBS =  -framework OpenGL -lGLEW -lglfw3 -framework Cocoa -framework IOKit -framework CoreVideo
+#Libraries needed: OpenGL and glfw3. glfw3 requires Cocoa, IOKit and CoreVideo.
+LIBS =  -framework OpenGL -lglfw3 -framework Cocoa -framework IOKit -framework CoreVideo
 
 #Compiler flags: C++11 standard, and display 'all' warnings.
 CXXFLAGS = -std=c++11 -Wall

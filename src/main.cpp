@@ -1,4 +1,4 @@
-#include <GL/glew.h> // to load OpenGL extensions at runtime
+#include <gl3w/gl3w.h>
 #include <GLFW/glfw3.h> // to set up the OpenGL context and manage window lifecycle and inputs
 
 #include <stdio.h>
@@ -12,6 +12,7 @@
 #define INITIAL_SIZE_HEIGHT 600
 
 
+
 /// Callbacks
 
 void resize_callback(GLFWwindow* window, int width, int height){
@@ -21,7 +22,7 @@ void resize_callback(GLFWwindow* window, int width, int height){
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
 	// Handle quitting
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){ 
 		glfwSetWindowShouldClose(window, GL_TRUE);
 		return;
 	}
@@ -31,7 +32,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
 	double x, y;
-	glfwGetCursorPos(window, &x, &y);
+    glfwGetCursorPos(window, &x, &y);
 	Renderer *rendererPtr = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
 	rendererPtr->buttonPressed(button, action, x, y);
 }
@@ -59,13 +60,11 @@ int main () {
 		return 1;
 	}
 
-	// On OS X, the correct OpenGL profile and version to use have to be explicitely defined.
-	#ifdef __APPLE__
 	glfwWindowHint (GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 2);
 	glfwWindowHint (GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	#endif
+	
 
 	// Create a window with a given size. Width and height are macros as we will need them again.
 	GLFWwindow* window = glfwCreateWindow(INITIAL_SIZE_WIDTH, INITIAL_SIZE_HEIGHT,"GL_Template", NULL, NULL);
@@ -78,13 +77,14 @@ int main () {
 	// Bind the OpenGL context and the new window.
 	glfwMakeContextCurrent(window);
 
-	// On OS X, GLEW needs the experimental flag, else some extensions won't be loaded.
-	#ifdef __APPLE__
-	glewExperimental = GL_TRUE;
-	#endif
-	// Initialize GLEW, for loading modern OpenGL extensions.
-	glewInit();
-	checkGLError();
+	if (gl3wInit()) {
+		std::cerr << "Failed to initialize OpenGL" << std::endl;
+		return -1;
+	}
+	if (!gl3wIsSupported(3, 2)) {
+		std::cerr << "OpenGL 3.2 not supported\n" << std::endl;
+		return -1;
+	}
 
 	// Create the renderer.
 	Renderer renderer = Renderer(INITIAL_SIZE_WIDTH,INITIAL_SIZE_HEIGHT);

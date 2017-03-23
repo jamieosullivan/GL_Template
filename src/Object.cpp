@@ -2,7 +2,6 @@
 #include <iostream>
 #include <vector>
 #include <lodepng/lodepng.h>
-// glm additional header to generate transformation matrices directly.
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "helpers/ProgramUtilities.h"
@@ -14,9 +13,7 @@ Object::Object(){}
 
 Object::~Object(){}
 
-void Object::init(){
-	
-	_time = 0.0;
+void Object::init(const std::string& meshPath, const std::vector<std::string>& texturesPaths){
 	
 	// Load the shaders
 	//_programDepthId = createGLProgram("ressources/shaders/object_depth.vert","ressources/shaders/object_depth.frag");
@@ -24,11 +21,11 @@ void Object::init(){
 	
 	// Load geometry.
 	mesh_t mesh;
-	loadObj("ressources/object.obj",mesh,Indexed);
+	loadObj(meshPath,mesh,Indexed);
 	centerAndUnitMesh(mesh);
 	computeTangentsAndBinormals(mesh);
 
-	_count = mesh.indices.size();
+	_count = (GLsizei)(mesh.indices.size());
 	
 	// Create an array buffer to host the geometry data.
 	GLuint vbo = 0;
@@ -97,23 +94,18 @@ void Object::init(){
 	_lightUniformId = glGetUniformBlockIndex(_programId, "Light");
 	
 	// Load and upload the textures.
-	_texColor = loadTexture("ressources/object_texture_color.png", _programId, 0,  "textureColor", true);
+	_texColor = loadTexture(texturesPaths[0], _programId, 0,  "textureColor", true);
 	
-	_texNormal = loadTexture("ressources/object_texture_normal.png", _programId, 1, "textureNormal");
+	_texNormal = loadTexture(texturesPaths[1], _programId, 1, "textureNormal");
 	
-	_texEffects = loadTexture("ressources/object_texture_ao_specular_reflection.png", _programId, 2, "textureEffects");
+	_texEffects = loadTexture(texturesPaths[2], _programId, 2, "textureEffects");
 	
 	checkGLError();
 	
 }
 
 
-void Object::draw(float elapsed, const glm::mat4& view, const glm::mat4& projection, const size_t pingpong){
-	
-	_time += elapsed;
-	
-	// Scale the model by 0.5.
-	glm::mat4 model = glm::scale(glm::rotate(glm::mat4(1.0f),float(_time),glm::vec3(0.0f,1.0f,0.0f)),glm::vec3(0.25f));
+void Object::draw(const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection, const size_t pingpong){
 	
 	// Combine the three matrices.
 	glm::mat4 MV = view * model;
@@ -194,8 +186,6 @@ void Object::clean(){
 	glDeleteTextures(1, &_texColor);
 	glDeleteTextures(1, &_texNormal);
 	glDeleteTextures(1, &_texEffects);
-	//glDeleteTextures(1, &_texCubeMap);
-	//glDeleteTextures(1, &_texCubeMapSmall);
 	glDeleteProgram(_programId);
 }
 

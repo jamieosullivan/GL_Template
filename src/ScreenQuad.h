@@ -1,9 +1,10 @@
 #ifndef ScreenQuad_h
 #define ScreenQuad_h
+#include <gl3w/gl3w.h>
 #include <GLFW/glfw3.h>
-#include <GL/glew.h>
 #include <glm/glm.hpp>
-
+#include <vector>
+#include <map>
 
 class ScreenQuad {
 
@@ -15,23 +16,25 @@ public:
 
 	/// Init function
 	void init(GLuint textureId, const std::string & shaderRoot);
+	
+	void init(std::map<std::string, GLuint> textureIds, const std::string & shaderRoot);
 
-	/// Draw function
-	void draw(glm::vec2 invScreenSize);
+	/// Draw function,
+	void draw(const glm::vec2& invScreenSize);
 
 	/// Clean function
 	void clean();
 
-	void switchFXAA();
 	
-private:
+protected:
+	
+	void loadGeometry();
 	
 	GLuint _programId;
 	GLuint _vao;
 	GLuint _ebo;
-	GLuint _textureId;
+	std::vector<GLuint> _textureIds;
 	
-	size_t _count;
 
 };
 

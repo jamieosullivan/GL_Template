@@ -72,7 +72,10 @@ Renderer::Renderer(int width, int height){
 	glBindBuffer(GL_UNIFORM_BUFFER,0);
 	
 	// Initialize objects.
-	_object.init();
+	const std::vector<std::string> texturesObject = { "ressources/object_texture_color.png", "ressources/object_texture_normal.png", "ressources/object_texture_ao_specular_reflection.png" };
+	
+	_object.init("ressources/object.obj", texturesObject);
+	
 	_skybox.init();
 	_finalScreen.init(_sceneFramebuffer->textureId(), "ressources/shaders/screenquad");
 	checkGLError();
@@ -90,7 +93,8 @@ void Renderer::draw(){
 	
 	// Physics simulation
 	physics(elapsed);
-
+	const glm::mat4 objectModel = glm::scale(glm::rotate(glm::mat4(1.0f),float(_timer),glm::vec3(0.0f,1.0f,0.0f)),glm::vec3(0.25f));
+	
 	// Update the light position (in view space).
 	// Bind the buffer.
 	glBindBuffer(GL_UNIFORM_BUFFER, _ubo);
@@ -118,7 +122,7 @@ void Renderer::draw(){
 	glClear(GL_DEPTH_BUFFER_BIT);
 	
 	// Draw objects
-	_object.draw(elapsed, _camera._view, _camera._projection, _pingpong);
+	_object.draw(objectModel, _camera._view, _camera._projection, _pingpong);
 	_skybox.draw(elapsed, _camera._view, _camera._projection);
 	
 	// Unbind the full scene framebuffer.

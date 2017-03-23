@@ -1,7 +1,7 @@
 #ifndef Renderer_h
 #define Renderer_h
+#include <gl3w/gl3w.h>
 #include <GLFW/glfw3.h>
-#include <GL/glew.h>
 #include <glm/glm.hpp>
 
 #include "Framebuffer.h"
@@ -66,7 +66,7 @@ private:
 	std::shared_ptr<Framebuffer> _sceneFramebuffer;
 	ScreenQuad _finalScreen;
 	
-	size_t _pingpong;
+	GLuint _pingpong;
 	GLuint _padding;
 	
 };

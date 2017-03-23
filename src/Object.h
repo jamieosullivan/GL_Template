@@ -1,7 +1,7 @@
-#ifndef Suzanne_h
-#define Suzanne_h
+#ifndef Object_h
+#define Object_h
+#include <gl3w/gl3w.h>
 #include <GLFW/glfw3.h>
-#include <GL/glew.h>
 #include <glm/glm.hpp>
 
 
@@ -15,10 +15,10 @@ public:
 	~Object();
 
 	/// Init function
-	void init();
+	void init(const std::string& meshPath, const std::vector<std::string>& texturesPaths);
 
 	/// Draw function
-	void draw(float elapsed, const glm::mat4& view, const glm::mat4& projection, const size_t pingpong);
+	void draw(const glm::mat4& model, const glm::mat4& view, const glm::mat4& projection, const size_t pingpong);
 	
 	/// Draw depth function
 	//void drawDepth(float elapsed, const glm::mat4& vp);
@@ -36,11 +36,10 @@ private:
 	GLuint _texColor;
 	GLuint _texNormal;
 	GLuint _texEffects;
+	
 	GLuint _lightUniformId;
 	
-	size_t _count;
-	
-	double _time;
+	GLsizei _count;
 	
 	glm::mat4 _lightMVP;
 	
