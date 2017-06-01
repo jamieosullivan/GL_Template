@@ -1,6 +1,6 @@
 #ifndef ProgramUtilities_h
 #define ProgramUtilities_h
-
+#define NOMINMAX // thanks, windows.h
 #include <gl3w/gl3w.h>
 #include <string>
 #include <vector>
